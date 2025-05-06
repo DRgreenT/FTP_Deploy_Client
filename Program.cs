@@ -22,14 +22,24 @@ namespace FTP_Client
             bool forceInteractive = args.Contains("-j");
             bool autoConfirm = args.Contains("-y");
             bool isLoop = args.Contains("-l");
+            bool isNoStop = args.Contains("-nS");
+
 
             Console.Clear();
             Console.SetCursorPosition(0, 0);
+            
+
             Console.WriteLine("== FTP Client Deployment Tool ==\n");
             
             if (forceInteractive && isLoop)
             {
                 Console.WriteLine("The -j and -l flags cannot be used together.");
+                Console.ReadLine();
+                return;
+            }
+            if (isNoStop && isLoop)
+            {
+                Console.WriteLine("The -nS and -l flags cannot be used together.");
                 Console.ReadLine();
                 return;
             }
@@ -81,7 +91,9 @@ namespace FTP_Client
 
                 do
                 {
+
                     Console.SetCursorPosition(0, cursorPos);
+
                     Stopwatch before = new Stopwatch();
                     before.Start();
                     Deployer.Deploy(config);
@@ -98,7 +110,8 @@ namespace FTP_Client
                         }
                     }
 
-                    Console.ReadLine();
+                    if(!isNoStop)
+                       Console.ReadLine();
                 }
                 while (isLoop && autoConfirm && !needsInput);
 
@@ -106,7 +119,8 @@ namespace FTP_Client
             catch (Exception ex)
             {
                 Console.WriteLine("Deployment failed: " + ex.Message);
-                Console.ReadLine();
+                if(!isNoStop)                
+                    Console.ReadLine();
             }
         }
     }

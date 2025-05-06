@@ -9,7 +9,8 @@ A lightweight and flexible CLI tool for **secure SSH/SFTP-based deployments from
 - Use `config.json` or interactive CLI input  
 - Smart overwrite modes (`OverwriteAll`, `OverwriteNewer`, `Skip`)  
 - Auto-creates `config.json` with default values  
-- Auto-saves valid configurations 
+- Auto-saves valid configurations
+- Planned: auto upload if content of local folder changes
 
 ---
 
@@ -51,7 +52,8 @@ A lightweight and flexible CLI tool for **secure SSH/SFTP-based deployments from
 ```bash
 -j      // Start with parameter -j to edit the config.json file 
 -y      // Start with parameter -y to skip the confirmation
--l      // Start with parameter -l for loop mode
+-l      // Start with parameter -l loop mode
+-nS     // Program window close at the end 
 ```
 
 If you want to use ```-l``` please consider:
