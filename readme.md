@@ -23,7 +23,7 @@ A lightweight and flexible CLI tool for **secure SSH/SFTP-based deployments from
 
 ### Config.json
 
-```json
+```
 {
   "host": "192.168.178.10",                      // Host address (IP or domain)
   "user": "thomas",                              // SSH username
