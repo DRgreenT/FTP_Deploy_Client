@@ -73,13 +73,22 @@ If you want to use ```-l``` please consider:
 
 ---
 
-## Build From Source (Optional)
-
-You can compile the application using **Visual Studio 2022+** or from the CLI:
-
-### Using Visual Studio
-
-1. Clone the repository:
+## Clone and build (Windows):
    ```bash
    git clone https://github.com/your-username/ftp_deploy_client.git
    cd ftp_deploy_client
+   build.bat
+   ```
+   or use Visual Studio 2022+ to open the solution file and build the project.
+
+---
+
+## Disclaimer
+
+The developer assumes no responsibility for:
+
+    Any damage, data loss, or service disruptions caused by the use or misuse of this software
+    Any malfunction due to system incompatibilities or environmental factors
+
+By using this software, you agree to use it at your own risk.
+The developer is not liable for any damages or losses incurred as a result of using this software.
