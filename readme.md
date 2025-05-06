@@ -1,15 +1,16 @@
-# FTP_Deploy_Client (.NET 9.0)
+# FTP_Deploy_Client v1.0
 
 A lightweight and flexible CLI tool for **secure SSH/SFTP-based deployments from Windows to Linux servers**, built with **.NET 9.0**.
+
+<img src="https://raw.githubusercontent.com/your-username/ftp_deploy_client/main/assets/logo.png" alt="" width="800"/>>
 
 - Upload application files  
 - Stop and restart remote processes via SSH  
 - Use `config.json` or interactive CLI input  
-- Smart overwrite modes (`OverwriteAll`, `OverwriteNewer`, `Skip`, `Resume`)  
+- Smart overwrite modes (`OverwriteAll`, `OverwriteNewer`, `Skip`)  
 - Auto-creates `config.json` with default values  
-- Auto-saves valid configurations  
-- Resume partial uploads *(planned)*  
-- 
+- Auto-saves valid configurations 
+
 ---
 
 ## Usage: 
@@ -48,7 +49,12 @@ A lightweight and flexible CLI tool for **secure SSH/SFTP-based deployments from
 ```bash
 -j      // Start with parameter -j to edit the config.json file 
 -y      // Start with parameter -y to skip the confirmation
+-l      // Start with parameter -l for loop mode
 ```
+
+If you want to use ```-l``` please consider:
+- it will set skip confirmation to true too
+- ```-j``` and ```-l``` will not work together
 
 ---
 

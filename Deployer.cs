@@ -103,12 +103,15 @@ namespace FTP_Client
 
         private static void UploadFiles(Config config, SftpClient sftp)
         {
-            Console.WriteLine("SFTP connected. Starting file upload...");
+            Console.WriteLine("SFTP connected. Starting file upload...\n");
             int lineNr = Console.CursorTop;
             int filesToUpload = 0;
             int skipped = 0;
 
-            var allFiles = Directory.GetFiles(config.localPath);
+            string[] allFiles = !config.includeSubfolder
+                ? Directory.GetFiles(config.localPath)
+                : Directory.GetFiles(config.localPath, "*.*", SearchOption.AllDirectories);
+
             int total = allFiles.Length;
             int current = 0;
 
@@ -116,7 +119,8 @@ namespace FTP_Client
             {
                 current++;
                 string remoteFileName = Path.GetFileName(file);
-                string remoteFullPath = $"{config.remotePath}/{remoteFileName}";
+                string relativePath = Path.GetRelativePath(config.localPath, file).Replace('\\', '/');
+                string remoteFullPath = $"{config.remotePath}/{relativePath}";
                 bool uploadFile = true;
 
                 try
@@ -137,10 +141,15 @@ namespace FTP_Client
 
                 if (uploadFile)
                 {
+                    string remoteDir = Path.GetDirectoryName(remoteFullPath)!.Replace('\\', '/');
+                    EnsureRemoteDirectoryExists(sftp, remoteDir);
+
                     using var stream = File.OpenRead(file);
                     filesToUpload++;
                     Console.SetCursorPosition(0, lineNr);
-                    Console.Write($"Uploading {current}/{total}: {remoteFileName}    ");
+                    Console.Write(new string(' ', Console.WindowWidth));
+                    Console.SetCursorPosition(0, lineNr);
+                    Console.Write($"Uploading {current}/{total}: {remoteFileName}");
                     sftp.UploadFile(stream, remoteFullPath, true);
                 }
                 else
@@ -149,13 +158,28 @@ namespace FTP_Client
                 }
             }
 
-            Console.WriteLine($"\nFile upload completed. Uploaded: {filesToUpload}, Skipped: {skipped}");
+            Console.WriteLine($"\nFile upload completed. Uploaded: {filesToUpload}, Skipped: {skipped}\n");
+        }
+
+        private static void EnsureRemoteDirectoryExists(SftpClient sftp, string remoteDir)
+        {
+            string[] parts = remoteDir.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            string path = "";
+            foreach (string part in parts)
+            {
+                path += "/" + part;
+                if (!sftp.Exists(path))
+                {
+                    sftp.CreateDirectory(path);
+                }
+            }
         }
 
         private static void StartProcess(Config config, SshClient ssh)
         {
             Console.WriteLine($"Restarting process '{config.processName}'...");
-            ssh.RunCommand($"nohup {config.remotePath}/{config.processName} > {config.remotePath}/log.txt 2>&1 &");
+
+            ssh.RunCommand($"{config.remotePath}/{config.processName} " + config.processArguments);
         }
     }
 }

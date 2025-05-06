@@ -24,8 +24,9 @@ dotnet publish %PROJECT% ^
     --self-contained true ^
     /p:PublishSingleFile=true ^
     /p:IncludeNativeLibrariesForSelfExtract=true ^
-    /p:PublishTrimmed=false ^
+    /p:DebugType=None /p:DebugSymbols=false ^
     -o %OUTPUT_DIR%
+
 
 if errorlevel 1 (
     echo Publish failed!

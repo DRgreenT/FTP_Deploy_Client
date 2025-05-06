@@ -10,9 +10,11 @@ namespace FTP_Client
         public string remotePath { get; set; } = string.Empty;
         public string localPath { get; set; } = string.Empty;
         public string processName { get; set; } = string.Empty;
+        public string processArguments { get; set; } = string.Empty;
         public bool restartProcess { get; set; } = true;
         public bool isSFTP { get; set; } = true;
-        public OverwriteMode overwriteMode { get; set; } = OverwriteMode.OverwriteNewer;
+        public bool includeSubfolder { get; set; } = false;
+        public OverwriteMode overwriteMode { get; set; } 
 
         private static readonly string configPath = "config.json";
 
@@ -50,7 +52,11 @@ namespace FTP_Client
             config.pass = ReadPassword("SSH Password: ", string.IsNullOrEmpty(config.pass) ? "" : "********");
             config.remotePath = Prompt("Remote Path", config.remotePath);
             config.localPath = Prompt("Local Path", config.localPath);
+            config.includeSubfolder = Prompt("Include Subfolders (y/n)", config.includeSubfolder ? "y" : "n").ToLower() == "y";
             config.processName = Prompt("Process Name", config.processName);
+            config.processArguments = Prompt("Process Arguments", config.processArguments);
+            config.restartProcess = Prompt("Restart Process (y/n)", config.restartProcess ? "y" : "n").ToLower() == "y";
+            config.overwriteMode = (OverwriteMode)Enum.Parse(typeof(OverwriteMode), Prompt("Overwrite Mode (0: OverwriteAll, 1: OverwriteNewer, 2: Skip)", ((int)config.overwriteMode).ToString()), true);
 
             if (string.IsNullOrEmpty(config.host) || string.IsNullOrEmpty(config.user) || string.IsNullOrEmpty(config.pass))
             {
@@ -99,6 +105,20 @@ namespace FTP_Client
             } while (key.Key != ConsoleKey.Enter);
             Console.WriteLine();
             return string.IsNullOrEmpty(pass) ? current : pass;
+        }
+
+        public bool IsValid()
+        {
+            return !string.IsNullOrWhiteSpace(pass)
+                && !string.IsNullOrWhiteSpace(user)
+                && !string.IsNullOrWhiteSpace(processName)
+                && !string.IsNullOrWhiteSpace(localPath)
+                && !string.IsNullOrWhiteSpace(remotePath)
+                && !string.IsNullOrWhiteSpace(host)
+                && !string.IsNullOrWhiteSpace(overwriteMode.ToString())
+                && !string.IsNullOrWhiteSpace(includeSubfolder.ToString())
+                && !string.IsNullOrWhiteSpace(restartProcess.ToString())
+                && !string.IsNullOrWhiteSpace(isSFTP.ToString());
         }
     }
 }
