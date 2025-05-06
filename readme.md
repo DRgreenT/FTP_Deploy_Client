@@ -2,7 +2,7 @@
 
 A lightweight and flexible CLI tool for **secure SSH/SFTP-based deployments from Windows to Linux servers**, built with **.NET 9.0**.
 
-<img src="https://raw.githubusercontent.com/your-username/ftp_deploy_client/main/assets/logo.png" alt="" width="800"/>>
+<img src="https://github.com/DRgreenT/FTP_Deploy_Client/blob/master/docs/pic1.png" alt="Pic_1" width="800"/>>
 
 - Upload application files  
 - Stop and restart remote processes via SSH  
