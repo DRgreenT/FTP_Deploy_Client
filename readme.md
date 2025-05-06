@@ -32,8 +32,10 @@ A lightweight and flexible CLI tool for **secure SSH/SFTP-based deployments from
   "remotePath": "/home/thomas",                  // Target path on the remote machine
   "localPath": "C:\\Users\\thoma\\source\\",     // Local path to source files
   "processName": "Test,                          // Process name to stop/restart on the server
+  "processArguments": "--nmap",                  // Arguments for the process" 
   "restartProcess": true,                        // Restart the process after deployment
   "isSFTP": true,                                // Must be true (uses SFTP)
+  "includeSubfolder": true,                      // Include subfolders in the upload
   "overwriteMode": 0                             // Overwrite behavior:
                                                  // 0 = Overwrite all
                                                  // 1 = Overwrite only if newer
