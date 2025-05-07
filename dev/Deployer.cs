@@ -87,16 +87,17 @@ namespace FTP_Deploy_Client.dev
             {
                 var check = ssh.RunCommand($"pgrep -f {config.processName}");
                 stillRunning = !string.IsNullOrWhiteSpace(check.Result);
+                               
                 if (stillRunning)
                 {
                     Console.SetCursorPosition(message.Length + 1, cursorPos);
                     Console.Write(spinner[index]);
-                    Thread.Sleep(300);
-                    index = index < spinner.Length ? index + 1 : 0;
+                    Thread.Sleep(150);
+                    index = index < spinner.Length - 1 ? index + 1 : 0;
                 }
             }
             while (stillRunning);
-
+            Thread.Sleep(2000); 
             Console.WriteLine("\nProcess has stopped.");
             return true;
         }
@@ -146,16 +147,16 @@ namespace FTP_Deploy_Client.dev
 
                     using var stream = File.OpenRead(file);
                     filesToUpload++;
-                    Console.SetCursorPosition(0, lineNr);
-                    Console.Write(new string(' ', Console.WindowWidth));
-                    Console.SetCursorPosition(0, lineNr);
-                    Console.Write($"Uploading {current}/{total}: {remoteFileName}");
                     sftp.UploadFile(stream, remoteFullPath, true);
                 }
                 else
                 {
                     skipped++;
                 }
+                Console.SetCursorPosition(0, lineNr);
+                Console.Write(new string(' ', Console.WindowWidth));
+                Console.SetCursorPosition(0, lineNr);
+                Console.Write($"File {current} of {total}: {remoteFileName}");
             }
 
             Console.WriteLine($"\nFile upload completed. Uploaded: {filesToUpload}, Skipped: {skipped}\n");
