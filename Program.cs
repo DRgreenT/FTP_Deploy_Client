@@ -24,13 +24,6 @@ namespace FTP_Client
             bool autoConfirm = args.Contains("-y");
             bool isLoop = args.Contains("-l");
             bool isNoStop = args.Contains("-nS");
-
-
-            Console.Clear();
-            Console.SetCursorPosition(0, 0);
-            
-
-            Console.WriteLine("== FTP Client Deployment Tool ==\n");
             
             if (forceInteractive && isLoop)
             {
@@ -45,6 +38,12 @@ namespace FTP_Client
                 return;
             }
 
+            Console.Clear();
+            Console.SetCursorPosition(0, 0);
+
+
+            Console.WriteLine("== FTP Client Deployment Tool ==\n");
+
             if (isLoop && !autoConfirm && !forceInteractive)
             {
                 Console.WriteLine("In order to use the loop function, autoconfirm is now set to true!");
@@ -55,7 +54,7 @@ namespace FTP_Client
             bool needsInput = forceInteractive || !configExists;
 
             Config? config = Config.Load(needsInput);
-
+            
             if (config == null)
             {
                 Console.WriteLine("Deployment aborted due to invalid config. Use -j flag to reset the config file.");
@@ -63,13 +62,20 @@ namespace FTP_Client
                 return;
             }
 
-            if(!config.IsValid())
+            if (!config.IsValid())
             {
-                Console.WriteLine("No valid values in config file!");
-                needsInput = true;
+                int cursorPos = Console.CursorTop;
+                Console.WriteLine("Config file does not contain valid values!");
+                config = Config.Load(true);
+                for (int i = cursorPos; i < 30; i++)
+                {
+                    Console.SetCursorPosition(0, i);
+                    Console.Write(new string(' ', Console.WindowWidth));
+                }
+                Console.SetCursorPosition(0, cursorPos);
             }
 
-            ShowSummary(config);
+            ShowSummary(config!);
 
             if (!autoConfirm && !needsInput)
             {
@@ -94,13 +100,15 @@ namespace FTP_Client
                 {
 
                     Console.SetCursorPosition(0, cursorPos);
+                    Console.CursorVisible = false;
 
                     Stopwatch before = new Stopwatch();
                     before.Start();
-                    Deployer.Deploy(config);
+                    Deployer.Deploy(config!);
                     before.Stop();
-                    Console.WriteLine($"Deployment was done in: {before.Elapsed.TotalSeconds.ToString("0.0")} seconds.");
-                   
+                    Console.WriteLine($"Deployment was done in: {before.Elapsed.TotalSeconds.ToString("0.0")} seconds.\n");
+                    Console.CursorVisible = true;
+
                     if (isLoop && autoConfirm && !needsInput)
                     {                      
                         Console.WriteLine("Press [Y] to deploy again, or [Esc] to exit.");
@@ -119,7 +127,7 @@ namespace FTP_Client
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Deployment failed: " + ex.Message);
+                Console.WriteLine("Deployment failed: " + ex.Message + "\n");
                 if(!isNoStop)                
                     Console.ReadLine();
             }
