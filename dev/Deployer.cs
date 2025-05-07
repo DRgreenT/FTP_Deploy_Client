@@ -1,5 +1,6 @@
 ﻿using Renci.SshNet;
 using Renci.SshNet.Common;
+using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace FTP_Deploy_Client.dev
 {
@@ -82,12 +83,12 @@ namespace FTP_Deploy_Client.dev
             bool stillRunning;
 
             string message = $"Waiting for process '{config.processName}' to stop...";
-            Console.Write(message); 
+            Console.Write(message);
             do
             {
                 var check = ssh.RunCommand($"pgrep -f {config.processName}");
                 stillRunning = !string.IsNullOrWhiteSpace(check.Result);
-                               
+
                 if (stillRunning)
                 {
                     Console.SetCursorPosition(message.Length + 1, cursorPos);
@@ -97,7 +98,7 @@ namespace FTP_Deploy_Client.dev
                 }
             }
             while (stillRunning);
-            Thread.Sleep(2000); 
+            Thread.Sleep(2000);
             Console.WriteLine("\nProcess has stopped.");
             return true;
         }
@@ -179,8 +180,28 @@ namespace FTP_Deploy_Client.dev
         private static void StartProcess(Config config, SshClient ssh)
         {
             Console.WriteLine($"Restarting process '{config.processName}'...");
+            string arguments = EscapeLitarals(config.processArguments);
+            ssh.RunCommand($"{config.remotePath}/{config.processName} " + arguments);
+        }
 
-            ssh.RunCommand($"{config.remotePath}/{config.processName} " + config.processArguments);
+        public static string EscapeLitarals(string arguments)
+        {
+            if(string.IsNullOrEmpty(arguments)) return string.Empty;
+
+            var arg = arguments.Split(' ');
+            string newArguments = string.Empty;
+
+            for (int i = 0; i < arg.Length; i++)
+            {
+                if (arg[i].StartsWith('$') || arg[i].StartsWith('*') || arg[i].StartsWith('"') || arg[i].StartsWith("&"))
+                {
+                    string newArg = "'" + arg[i] + "'";
+                    arg[i] = newArg;
+                }
+                arg[i] = i == arg.Length - 1 ? arg[i] : arg[i] + " ";
+                newArguments += arg[i];              
+            }
+            return newArguments;
         }
     }
 }
