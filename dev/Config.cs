@@ -14,7 +14,7 @@ namespace FTP_Deploy_Client.dev
         public bool restartProcess { get; set; } = true;
         public bool isSFTP { get; set; } = true;
         public bool includeSubfolder { get; set; } = false;
-        public OverwriteMode overwriteMode { get; set; } 
+        public OverwriteMode overwriteMode { get; set; }
 
         private static readonly string configPath = "config.json";
 
@@ -73,7 +73,7 @@ namespace FTP_Deploy_Client.dev
             {
                 Console.WriteLine("Failed to save config.json: " + ex.Message);
             }
-
+            Thread.Sleep(2000);
             return config;
         }
 
@@ -103,22 +103,24 @@ namespace FTP_Deploy_Client.dev
                     Console.Write("\b \b");
                 }
             } while (key.Key != ConsoleKey.Enter);
-            Console.WriteLine();
+            Console.WriteLine();            
             return string.IsNullOrEmpty(pass) ? current : pass;
         }
 
+
         public bool IsValid()
         {
-            return !string.IsNullOrWhiteSpace(pass)
+            bool hasBaseValues =
+                !string.IsNullOrWhiteSpace(pass)
                 && !string.IsNullOrWhiteSpace(user)
-                && !string.IsNullOrWhiteSpace(processName)
                 && !string.IsNullOrWhiteSpace(localPath)
                 && !string.IsNullOrWhiteSpace(remotePath)
-                && !string.IsNullOrWhiteSpace(host)
-                && !string.IsNullOrWhiteSpace(overwriteMode.ToString())
-                && !string.IsNullOrWhiteSpace(includeSubfolder.ToString())
-                && !string.IsNullOrWhiteSpace(restartProcess.ToString())
-                && !string.IsNullOrWhiteSpace(isSFTP.ToString());
+                && !string.IsNullOrWhiteSpace(host);
+
+            bool processOk = !restartProcess || !string.IsNullOrWhiteSpace(processName);
+
+            return hasBaseValues && processOk;
         }
     }
 }
+
