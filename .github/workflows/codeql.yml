@@ -1,0 +1,49 @@
+name: CodeQL CSharp Analysis
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  schedule:
+    - cron: '45 8 * * 2'  # Every Tuesday at 08:45 UTC
+
+jobs:
+  analyze:
+    name: Analyze C#
+    runs-on: windows-latest  # Use Windows since it's a .NET console app
+
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [csharp]
+        build-mode: [manual]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 9 SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        build-mode: ${{ matrix.build-mode }}
+
+    # Manual build for C# project
+    - name: Build the project
+      run: dotnet build FTP_Deploy_Client.csproj --configuration Release
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"
