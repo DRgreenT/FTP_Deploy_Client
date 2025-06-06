@@ -38,4 +38,4 @@ echo.
 echo === Build and publish completed successfully ===
 echo Output is located in: %OUTPUT_DIR%
 endlocal
-pause
+timeout /t 5 >nul
