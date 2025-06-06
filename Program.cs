@@ -24,7 +24,7 @@ namespace FTP_Client
             bool autoConfirm = args.Contains("-y");
             bool isLoop = args.Contains("-l");
             bool isNoStop = args.Contains("-nS");
-            
+
             if (forceInteractive && isLoop)
             {
                 Console.WriteLine("The -j and -l flags cannot be used together.");
@@ -40,7 +40,6 @@ namespace FTP_Client
 
             Console.Clear();
             Console.SetCursorPosition(0, 0);
-
 
             Console.WriteLine("== FTP Client Deployment Tool ==\n");
 
