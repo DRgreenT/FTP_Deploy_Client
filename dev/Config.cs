@@ -14,6 +14,7 @@ namespace FTP_Deploy_Client.dev
         public bool restartProcess { get; set; } = true;
         public bool isSFTP { get; set; } = true;
         public bool includeSubfolder { get; set; } = false;
+        public bool isUsingNohup { get; set; } = false;
         public OverwriteMode overwriteMode { get; set; }
 
         private static readonly string configPath = "config.json";
@@ -54,6 +55,7 @@ namespace FTP_Deploy_Client.dev
             config.localPath = Prompt("Local Path", config.localPath);
             config.includeSubfolder = Prompt("Include Subfolders (y/n)", config.includeSubfolder ? "y" : "n").ToLower() == "y";
             config.processName = Prompt("Process Name", config.processName);
+            config.isUsingNohup = Prompt("Use nohup (non terminal process) to start process (y/n)", config.isUsingNohup ? "y" : "n").ToLower() == "y";
             config.processArguments = Prompt("Process Arguments", config.processArguments);
             config.restartProcess = Prompt("Restart Process (y/n)", config.restartProcess ? "y" : "n").ToLower() == "y";
             config.overwriteMode = (OverwriteMode)Enum.Parse(typeof(OverwriteMode), Prompt("Overwrite Mode (0: OverwriteAll, 1: OverwriteNewer, 2: Skip)", ((int)config.overwriteMode).ToString()), true);

@@ -16,6 +16,8 @@ namespace FTP_Client
             Console.WriteLine($"Include Subfolders: {config.includeSubfolder}");
             Console.WriteLine($"Process Name:       {config.processName}");
             Console.WriteLine($"Restart Process:    {config.restartProcess}");
+            Console.WriteLine($"Use Nohup:          {config.isUsingNohup}");
+            //Console.WriteLine($"Process Arguments:  {config.processArguments}");
             Console.WriteLine($"Overwrite Mode:     {config.overwriteMode}");
         }
         static void Main(string[] args)
