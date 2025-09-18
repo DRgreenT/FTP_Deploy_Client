@@ -1,6 +1,6 @@
 ﻿using Renci.SshNet;
 using Renci.SshNet.Common;
-using static Org.BouncyCastle.Math.EC.ECCurve;
+using System.Runtime.Intrinsics.X86;
 
 namespace FTP_Deploy_Client.dev
 {
@@ -14,7 +14,7 @@ namespace FTP_Deploy_Client.dev
             ssh.Connect();
             Console.WriteLine("SSH connected.");
 
-            if (StopProcessIfRunning(config, ssh))
+            if (IsProcessStopped(config, ssh))
             {
                 sftp.Connect();
                 UploadFiles(config, sftp);
@@ -33,19 +33,55 @@ namespace FTP_Deploy_Client.dev
             ssh.Disconnect();
         }
 
-        private static bool StopProcessIfRunning(Config config, SshClient ssh)
+        private static bool IsProcessRunning(Config config, SshClient ssh, out SshCommand result)
         {
+            result = null!;
+
             if (string.IsNullOrEmpty(config.processName))
+            {
+                Console.WriteLine("No process name provided.");
                 return false;
+            }
+
+            bool isRunning = false;
+            int attempts = 0;
+            const int maxAttempts = 5;
+
 
             Console.WriteLine($"Checking if process '{config.processName}' is running...");
-            var result = ssh.RunCommand($"ps -eo user,pid,cmd | grep -v grep | grep {config.processName}");
 
-            if (string.IsNullOrWhiteSpace(result.Result))
+            while (!isRunning && attempts < maxAttempts)
             {
-                Console.WriteLine("Process is not running.");
-                return true;
+                attempts++;               
+
+                result = ssh.RunCommand($"ps -eo user,pid,cmd | grep -v grep | grep {config.processName}");
+
+                if (string.IsNullOrWhiteSpace(result.Result))
+                {
+                    if (attempts < maxAttempts)
+                    {
+                        Thread.Sleep(1000);
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Process is running.");
+                    return true;
+                }
             }
+            Console.WriteLine("Process is not running.");
+            return false;
+        }
+
+        private static bool IsProcessStopped(Config config, SshClient ssh)
+        {
+            return StopProcessIfRunning(config, ssh);
+        }
+
+        private static bool StopProcessIfRunning(Config config, SshClient ssh)
+        {
+            if (!IsProcessRunning(config, ssh, out var result))
+                return true;
 
             string[] lines = result.Result.Split('\n', StringSplitOptions.RemoveEmptyEntries);
             string currentUser = ssh.RunCommand("whoami").Result.Trim();
@@ -98,6 +134,7 @@ namespace FTP_Deploy_Client.dev
                 }
             }
             while (stillRunning);
+
             Thread.Sleep(2000);
             Console.WriteLine("\nProcess has stopped.");
             return true;
@@ -181,7 +218,21 @@ namespace FTP_Deploy_Client.dev
         {
             Console.WriteLine($"Restarting process '{config.processName}'...");
             string arguments = EscapeLitarals(config.processArguments);
-            ssh.RunCommand($"{config.remotePath}/{config.processName} " + arguments);
+            string nohupPrefix = config.isUsingNohup ? "nohup " : "";
+            string fullcommand = $"{nohupPrefix} ./{config.remotePath}/{config.processName} {arguments} &";    
+            var command = ssh.RunCommand(fullcommand);
+            if (IsProcessRunning(config, ssh, out var result))
+            {
+                Console.WriteLine("Process restarted successfully.");
+            }
+            else
+            {
+                Console.WriteLine("=== Command Feedback ===");
+                Console.WriteLine($"Command   : {fullcommand}");
+                Console.WriteLine($"ExitCode  : {command.ExitStatus}");
+                Console.WriteLine($"StdOut    : {command.Result}");
+                Console.WriteLine($"StdErr    : {command.Error}"); ;
+            }
         }
 
         public static string EscapeLitarals(string arguments)
