@@ -8,24 +8,30 @@ namespace FTP_Client
     {
         static void ShowSummary(Config config)
         {
-            Console.WriteLine("\n== Config Summary ==");
-            Console.WriteLine($"Host:               {config.host}");
-            Console.WriteLine($"User:               {config.user}");
-            Console.WriteLine($"Remote Path:        {config.remotePath}");
-            Console.WriteLine($"Local Path:         {config.localPath}");
-            Console.WriteLine($"Include Subfolders: {config.includeSubfolder}");
-            Console.WriteLine($"Process Name:       {config.processName}");
-            Console.WriteLine($"Restart Process:    {config.restartProcess}");
-            Console.WriteLine($"Use Nohup:          {config.isUsingNohup}");
-            //Console.WriteLine($"Process Arguments:  {config.processArguments}");
-            Console.WriteLine($"Overwrite Mode:     {config.overwriteMode}");
+            Console.WriteLine("\n== Config summary ==");
+
+            int labelWidth = 31; 
+            void Print(string label, object value) =>
+                Console.WriteLine($"{label.PadRight(labelWidth)} {value}");
+
+            Print("Hostname:", config.Host);
+            Print("Username:", config.User);
+            Print("Program path (remote):", config.RemotePath);
+            Print("Local path (source):", config.LocalPath);
+            Print("Include subfolders in upload:", config.IsIncludeSubfoldersInUpload);
+            Print("Process name:", config.ProcessName);
+            Print("Restart process after update:", config.IsRestartProcessAfterUpload);
+            Print("Use nohup:", config.IsUsingNohup);
+            Print("Process arguments:", config.ProcessArguments);
+            Print("Overwrite mode:", config.OverWriteMode);
         }
+
         static void Main(string[] args)
         {
             bool forceInteractive = args.Contains("-j");
             bool autoConfirm = args.Contains("-y");
-            bool isLoop = args.Contains("-l");
             bool isNoStop = args.Contains("-nS");
+            bool isLoop = args.Contains("-l");
 
             if (forceInteractive && isLoop)
             {

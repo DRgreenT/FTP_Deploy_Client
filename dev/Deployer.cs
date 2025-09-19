@@ -8,8 +8,8 @@ namespace FTP_Deploy_Client.dev
     {
         public static void Deploy(Config config)
         {
-            using var ssh = new SshClient(config.host, config.user, config.pass);
-            using var sftp = new SftpClient(config.host, config.user, config.pass);
+            using var ssh = new SshClient(config.Host, config.User, config.Password);
+            using var sftp = new SftpClient(config.Host, config.User, config.Password);
 
             ssh.Connect();
             Console.WriteLine("SSH connected.");
@@ -20,7 +20,7 @@ namespace FTP_Deploy_Client.dev
                 UploadFiles(config, sftp);
                 sftp.Disconnect();
 
-                if (config.restartProcess && !string.IsNullOrEmpty(config.processName))
+                if (config.IsRestartProcessAfterUpload && !string.IsNullOrEmpty(config.ProcessName))
                     StartProcess(config, ssh);
 
                 Console.WriteLine("Deployment finished.");
@@ -37,7 +37,7 @@ namespace FTP_Deploy_Client.dev
         {
             result = null!;
 
-            if (string.IsNullOrEmpty(config.processName))
+            if (string.IsNullOrEmpty(config.ProcessName))
             {
                 Console.WriteLine("No process name provided.");
                 return false;
@@ -48,13 +48,13 @@ namespace FTP_Deploy_Client.dev
             const int maxAttempts = 5;
 
 
-            Console.WriteLine($"Checking if process '{config.processName}' is running...");
+            Console.WriteLine($"Checking if process '{config.ProcessName}' is running...");
 
             while (!isRunning && attempts < maxAttempts)
             {
                 attempts++;               
 
-                result = ssh.RunCommand($"ps -eo user,pid,cmd | grep -v grep | grep {config.processName}");
+                result = ssh.RunCommand($"ps -eo user,pid,cmd | grep -v grep | grep {config.ProcessName}");
 
                 if (string.IsNullOrWhiteSpace(result.Result))
                 {
@@ -110,19 +110,19 @@ namespace FTP_Deploy_Client.dev
                 return false;
             }
 
-            Console.WriteLine($"Stopping process '{config.processName}'...");
-            ssh.RunCommand($"pkill -f {config.processName}");
+            Console.WriteLine($"Stopping process '{config.ProcessName}'...");
+            ssh.RunCommand($"pkill -f {config.ProcessName}");
 
             int cursorPos = Console.CursorTop;
             string[] spinner = { "|", "/", "-", "\\" };
             int index = 0;
             bool stillRunning;
 
-            string message = $"Waiting for process '{config.processName}' to stop...";
+            string message = $"Waiting for process '{config.ProcessName}' to stop...";
             Console.Write(message);
             do
             {
-                var check = ssh.RunCommand($"pgrep -f {config.processName}");
+                var check = ssh.RunCommand($"pgrep -f {config.ProcessName}");
                 stillRunning = !string.IsNullOrWhiteSpace(check.Result);
 
                 if (stillRunning)
@@ -147,19 +147,20 @@ namespace FTP_Deploy_Client.dev
             int filesToUpload = 0;
             int skipped = 0;
 
-            string[] allFiles = !config.includeSubfolder
-                ? Directory.GetFiles(config.localPath)
-                : Directory.GetFiles(config.localPath, "*.*", SearchOption.AllDirectories);
+            string[] allFiles = !config.IsIncludeSubfoldersInUpload
+                ? Directory.GetFiles(config.LocalPath)
+                : Directory.GetFiles(config.LocalPath, "*.*", SearchOption.AllDirectories);
 
             int total = allFiles.Length;
             int current = 0;
-
+            List<string> copied = new List<string>();
+            string errors = "";
             foreach (var file in allFiles)
             {
                 current++;
                 string remoteFileName = Path.GetFileName(file);
-                string relativePath = Path.GetRelativePath(config.localPath, file).Replace('\\', '/');
-                string remoteFullPath = $"{config.remotePath}/{relativePath}";
+                string relativePath = Path.GetRelativePath(config.LocalPath, file).Replace('\\', '/');
+                string remoteFullPath = $"{config.RemotePath}/{relativePath}";
                 bool uploadFile = true;
 
                 try
@@ -168,9 +169,9 @@ namespace FTP_Deploy_Client.dev
                     var localTime = File.GetLastWriteTime(file);
                     var remoteTime = remoteAttrs.LastWriteTime;
 
-                    if (config.overwriteMode == OverwriteMode.Skip)
+                    if (config.OverWriteMode == OverwriteMode.Skip)
                         uploadFile = false;
-                    else if (config.overwriteMode == OverwriteMode.OverwriteNewer && remoteTime >= localTime)
+                    else if (config.OverWriteMode == OverwriteMode.OverwriteNewer && remoteTime >= localTime)
                         uploadFile = false;
                 }
                 catch (SftpPathNotFoundException)
@@ -180,12 +181,19 @@ namespace FTP_Deploy_Client.dev
 
                 if (uploadFile)
                 {
-                    string remoteDir = Path.GetDirectoryName(remoteFullPath)!.Replace('\\', '/');
-                    EnsureRemoteDirectoryExists(sftp, remoteDir);
-
-                    using var stream = File.OpenRead(file);
-                    filesToUpload++;
-                    sftp.UploadFile(stream, remoteFullPath, true);
+                    try
+                    {
+                        string remoteDir = Path.GetDirectoryName(remoteFullPath)!.Replace('\\', '/');
+                        EnsureRemoteDirectoryExists(sftp, remoteDir);
+                        using var stream = File.OpenRead(file);
+                        filesToUpload++;
+                        sftp.UploadFile(stream, remoteFullPath, true);
+                        copied.Add(file);
+                    }
+                    catch(Exception ex)
+                    {
+                        errors += "Error: " + file + " " + ex.Message + " " + remoteFullPath + " \n";
+                    }
                 }
                 else
                 {
@@ -198,6 +206,10 @@ namespace FTP_Deploy_Client.dev
             }
 
             Console.WriteLine($"\nFile upload completed. Uploaded: {filesToUpload}, Skipped: {skipped}\n");
+            foreach (var file in copied)
+                Console.Write(file.ToString() + " copied\n");
+
+            Console.WriteLine(errors);
         }
 
         private static void EnsureRemoteDirectoryExists(SftpClient sftp, string remoteDir)
@@ -216,24 +228,28 @@ namespace FTP_Deploy_Client.dev
 
         private static void StartProcess(Config config, SshClient ssh)
         {
-            Console.WriteLine($"Restarting process '{config.processName}'...");
-            string arguments = EscapeLitarals(config.processArguments);
-            string nohupPrefix = config.isUsingNohup ? "nohup " : "";
-            string fullcommand = $"{nohupPrefix} ./{config.remotePath}/{config.processName} {arguments} &";    
-            var command = ssh.RunCommand(fullcommand);
-            if (IsProcessRunning(config, ssh, out var result))
-            {
-                Console.WriteLine("Process restarted successfully.");
-            }
-            else
+            Console.WriteLine($"Restarting process '{config.ProcessName}'...");
+            string arguments = EscapeLitarals(config.ProcessArguments);
+            string nohupPrefix = config.IsUsingNohup ? "nohup " : "";
+            string logFile = $"{config.RemotePath}/last_start.log";
+
+            string fullcommand = $"{nohupPrefix}{config.RemotePath}/{config.ProcessName} {arguments} > {logFile} 2>&1 &";
+
+            ssh.RunCommand(fullcommand);
+
+            Thread.Sleep(2000); 
+            
+            if (!IsProcessRunning(config, ssh, out var result))
             {
                 Console.WriteLine("=== Command Feedback ===");
                 Console.WriteLine($"Command   : {fullcommand}");
-                Console.WriteLine($"ExitCode  : {command.ExitStatus}");
-                Console.WriteLine($"StdOut    : {command.Result}");
-                Console.WriteLine($"StdErr    : {command.Error}"); ;
+
+                var logResult = ssh.RunCommand($"tail -n 20 {logFile}");
+                Console.WriteLine("Last log output:");
+                Console.WriteLine(logResult.Result);
             }
         }
+
 
         public static string EscapeLitarals(string arguments)
         {
@@ -244,7 +260,7 @@ namespace FTP_Deploy_Client.dev
 
             for (int i = 0; i < arg.Length; i++)
             {
-                if (arg[i].StartsWith('$') || arg[i].StartsWith('*') || arg[i].StartsWith('"') || arg[i].StartsWith("&"))
+                if (arg[i].StartsWith('$') || arg[i].StartsWith('*') || arg[i].StartsWith('"') || arg[i].StartsWith('&'))
                 {
                     string newArg = "'" + arg[i] + "'";
                     arg[i] = newArg;
