@@ -1,4 +1,4 @@
-# FTP_Deploy_Client v1.0
+# FTP_Deploy_Client v1.1
 
 A lightweight and flexible CLI tool for **secure SSH/SFTP-based deployments from Windows to Linux servers**, built with **.NET 9.0**.
 
@@ -11,6 +11,8 @@ A lightweight and flexible CLI tool for **secure SSH/SFTP-based deployments from
 - Auto-creates `config.json` with default values  
 - Auto-saves valid configurations
 - Planned: auto upload if content of local folder changes
+
+[ChangeLog](./docs/ChangeLog.md)
 
 ---
 
@@ -30,10 +32,11 @@ A lightweight and flexible CLI tool for **secure SSH/SFTP-based deployments from
   "host": "192.168.178.10",                      // Host address (IP or domain)
   "user": "thomas",                              // SSH username
   "pass": "******",                              // SSH password (plain text)
-  "remotePath": "/home/thomas",                  // Target path on the remote machine
+  "remotePath": "/home/thomas/Program,           // Target path on the remote machine
   "localPath": "C:\\Users\\thoma\\source\\",     // Local path to source files
   "processName": "Test,                          // Process name to stop/restart on the server
-  "processArguments": "--nmap",                  // Arguments for the process" 
+  "processArguments": "--nmap",                  // Arguments for the process"
+  "IsUsingNohup" : true                          // Use nohup (non terminal process) to start process
   "restartProcess": true,                        // Restart the process after deployment
   "isSFTP": true,                                // Must be true (uses SFTP)
   "includeSubfolder": true,                      // Include subfolders in the upload
