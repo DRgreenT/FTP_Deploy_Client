@@ -78,7 +78,7 @@ If you want to use ```-l``` please consider:
 
 ## Clone and build (Windows):
    ```bash
-   git clone https://github.com/your-username/ftp_deploy_client.git
+   git clone https://github.com/DRgreenT/ftp_deploy_client.git
    cd ftp_deploy_client
    build.bat
    ```
